@@ -3,9 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.example.liuqingc.mysimplepaint.MainActivity">
     <item
-        android:id="@+id/action_settings"
+        android:id="@+id/color_red"
         android:orderInCategory="100"
-        android:title="@string/action_settings"
+        android:title="Red"
+        android:icon="@drawable/red"
         app:showAsAction="never" />
 
         <!--<item-->

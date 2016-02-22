@@ -7,20 +7,37 @@
     tools:showIn="@layout/activity_main"
     android:orientation="vertical">
 
-    <ImageView
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="40">
+
+        <ListView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:id="@+id/color_listView"
+            android:layout_weight="10"
+            android:minWidth="32dp" />
+
+        <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/imageView"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
         android:scaleType="centerCrop"
-        android:layout_weight="10" />
+        android:layout_weight="1" />
+
+    </LinearLayout>
 
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom">
+        android:layout_gravity="bottom"
+        android:layout_weight="1"
+        android:minHeight="48dp">
 
         <LinearLayout
             android:orientation="vertical"
@@ -45,10 +62,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Drag/Zoom mode"
-            android:textAppearance="?android:attr/textAppearanceLarge" android:padding="10px"
+            android:textAppearance="?android:attr/textAppearanceLarge"
             android:textSize="12dp"
             android:minWidth="120dp"
-            android:singleLine="false" />
+            android:singleLine="false"
+            android:padding="10px" />
     </LinearLayout>
 
         <Spinner

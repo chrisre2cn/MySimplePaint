@@ -1,5 +1,7 @@
 package com.example.liuqingc.mysimplepaint;
 
+import android.app.Activity;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -29,6 +31,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -69,8 +72,13 @@ public class MainActivityFragment extends Fragment {
     static final int TEXT=2;
     String m_Text = null;
 
+    // colors
 
-//    drag&zoom
+    static final Integer colors [] = new Integer[] {Color.BLACK,Color.BLUE,Color.CYAN,Color.DKGRAY,Color.GRAY,
+            Color.GREEN	,Color.LTGRAY,Color.MAGENTA,Color.RED,Color.WHITE,Color.YELLOW};
+
+
+    //    drag&zoom
     PointF start = new PointF();
     PointF mid = new PointF();
     float oldDist = 1f;
@@ -311,42 +319,42 @@ public class MainActivityFragment extends Fragment {
                                     spriteStack.push(new Sprite(lastx, lasty, lastr, mPaint));
                                     break;
                                 case RECT:
-                                    spriteStack.push(new Sprite(startx,starty,coords[0],coords[1],mPaint));
+                                    spriteStack.push(new Sprite(startx, starty, coords[0], coords[1], mPaint));
                                     break;
                                 case TEXT:
                                     AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
                                     builder.setTitle("Input text");
-        // I'm using fragment here so I'm using getView() to provide ViewGroup
-        // but you can provide here any other instance of ViewGroup from your Fragment / Activity
+                                    // I'm using fragment here so I'm using getView() to provide ViewGroup
+                                    // but you can provide here any other instance of ViewGroup from your Fragment / Activity
                                     View viewInflated = LayoutInflater.from(getContext()).inflate(R.layout.inputtext, (ViewGroup) getView(), false);
-        // Set up the input
+                                    // Set up the input
                                     final EditText input = (EditText) viewInflated.findViewById(R.id.input);
-        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+                                    // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
                                     builder.setView(viewInflated);
 
-        // Set up the buttons
+                                    // Set up the buttons
                                     builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        dialog.dismiss();
-                                        m_Text = input.getText().toString();
-                                        if (m_Text != null) {
-                                            spriteStack.push(new Sprite(coords[0], coords[1], m_Text, mPaint));
-                                            m_Text = null;
-                                            if (!spriteStack.empty())
-                                                mUndo.setEnabled(true);
-                                        }
-                                        drawSprites();
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            dialog.dismiss();
+                                            m_Text = input.getText().toString();
+                                            if (m_Text != null) {
+                                                spriteStack.push(new Sprite(coords[0], coords[1], m_Text, mPaint));
+                                                m_Text = null;
+                                                if (!spriteStack.empty())
+                                                    mUndo.setEnabled(true);
+                                            }
+                                            drawSprites();
 //                                        mImageView.invalidate();
 
 
-                                    }
+                                        }
                                     });
                                     builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                                    @Override
+                                        @Override
                                         public void onClick(DialogInterface dialog, int which) {
-                                        dialog.cancel();
-                                          }
+                                            dialog.cancel();
+                                        }
                                     });
 
                                     builder.show();
@@ -370,17 +378,17 @@ public class MainActivityFragment extends Fragment {
                             if (dragging) { //movement of first finger
                                 drawSprites();
                                 switch (drawMode) {
-                                case CIRCLE:
+                                    case CIRCLE:
                                         lastx = (coords[0] + startx) / 2;
                                         lasty = (coords[1] + starty) / 2;
                                         lastr = Math.max(Math.abs(coords[0] - startx), Math.abs(coords[1] - starty)) / 2;
                                         mCanvas.drawCircle(lastx, lasty, lastr, mPaint);
-                                    break;
-                                case RECT:
-                                    mCanvas.drawRect(startx, starty, coords[0], coords[1], mPaint);
-                                    break;
+                                        break;
+                                    case RECT:
+                                        mCanvas.drawRect(startx, starty, coords[0], coords[1], mPaint);
+                                        break;
 
-                            }
+                                }
 
 
                                 mImageView.invalidate();
@@ -578,12 +586,13 @@ public class MainActivityFragment extends Fragment {
         drawAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         drawSpinner.setAdapter(drawAdapter);
         drawSpinner.setSelection(0);
+        drawSpinner.setBackgroundColor(Color.RED);
 
         drawSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                drawMode=position;
-                Log.v(TAG,"drawing "+drawMode);
+                drawMode = position;
+                Log.v(TAG, "drawing " + drawMode);
 
             }
 
@@ -592,6 +601,23 @@ public class MainActivityFragment extends Fragment {
 
             }
         });
+
+
+        ListView mListView = (ListView) rootview.findViewById(R.id.color_listView);
+
+
+        colorAdapter MyAdapter = new colorAdapter(getContext(),0);
+        MyAdapter.addAll(colors);
+
+        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                mPaint.setColor(colors[position]);
+                drawSpinner.setBackgroundColor(colors[position]);
+            }
+        });
+
+        mListView.setAdapter(MyAdapter);
 
         return rootview;
     }
@@ -632,5 +658,33 @@ private void midPoint(PointF point, MotionEvent event) {
    float y = event.getY(0) + event.getY(1);
    point.set(x / 2, y / 2);
 }
+
+
+        public class colorAdapter extends ArrayAdapter<Integer> {
+
+        private Context context;
+
+        public colorAdapter(Context context, int resource) {
+            super(context, resource);
+            this.context=context;
+//            resource is layout, not used here
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+  //          return super.getView(position, convertView, parent);
+   //               ImageView imageView;
+        if (convertView == null) {
+            LayoutInflater mInflater = (LayoutInflater) context.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
+            convertView = (ImageView) mInflater.inflate(R.layout.color_item, parent, false);
+
+       }
+            ((ImageView) convertView).setBackgroundColor(this.getItem(position));
+
+            return convertView;
+
+        }
+    }
+
 
 }
