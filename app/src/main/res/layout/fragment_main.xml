@@ -2,10 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
+
     tools:context="com.example.liuqingc.mysimplepaint.MainActivityFragment"
     tools:showIn="@layout/activity_main"
     android:orientation="vertical">
@@ -29,34 +26,44 @@
             android:orientation="vertical"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_weight="4">
+            android:layout_weight="4"
+            android:layout_gravity="left">
 
 
 
     <SeekBar
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/brushBar"
         android:max="20"
-        android:contentDescription="Brush size" />
+        android:contentDescription="Brush size"
+        android:minWidth="120dp"
+        android:nestedScrollingEnabled="true" />
         <TextView
             android:id="@+id/textView1"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Brush is off"
             android:textAppearance="?android:attr/textAppearanceLarge" android:padding="10px"
-            android:textSize="12dp" />
+            android:textSize="12dp"
+            android:minWidth="120dp" />
     </LinearLayout>
+
+        <Spinner
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/draw_spinner"
+            android:layout_weight="10" />
 
         <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Done!"
         android:id="@+id/done_button"
-        android:layout_weight="1"
-        android:enabled="true"
-            android:textSize="16dp" />
+            android:enabled="true"
+            android:textSize="16dp"
+            android:minWidth="32dp"
+            android:layout_weight="1" />
 
     <Button
         android:layout_width="wrap_content"
@@ -64,8 +71,9 @@
         android:text="Undo"
         android:id="@+id/undo_button"
         android:layout_gravity="right"
-        android:layout_weight="1"
-        android:textSize="16dp" />
+        android:textSize="16dp"
+        android:minWidth="32dp"
+        android:layout_weight="1" />
 
     </LinearLayout>
 

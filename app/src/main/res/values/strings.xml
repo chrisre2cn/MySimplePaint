@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">MySimplePaint</string>
     <string name="action_settings">Settings</string>
+        <string-array name="draw_array">
+        <item>Circle</item>
+        <item>Rectangle</item>
+        <item>Text</item>
+    </string-array>
 </resources>
