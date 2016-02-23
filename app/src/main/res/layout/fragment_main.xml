@@ -58,7 +58,8 @@
         android:minHeight="24dp"
         android:layout_alignTop="@+id/done_button"
         android:layout_centerHorizontal="true"
-        android:layout_alignBottom="@+id/done_button" />
+        android:layout_alignBottom="@+id/done_button"
+        android:layout_toRightOf="@+id/currentColorView" />
 
     <Button
         android:layout_width="wrap_content"
@@ -82,5 +83,18 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true" />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/currentColorView"
+        android:layout_toRightOf="@+id/brushBar"
+        android:layout_alignTop="@+id/done_button"
+        android:layout_alignBottom="@+id/done_button"
+        android:maxHeight="48dp"
+        android:maxWidth="64dp"
+        android:minHeight="48dp"
+        android:minWidth="64dp"
+        android:padding="5dp" />
 
 </RelativeLayout>

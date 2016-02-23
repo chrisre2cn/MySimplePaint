@@ -48,7 +48,7 @@ public class MainActivityFragment extends Fragment {
     private Uri bmpUri;
     private ShareActionProvider mShareActionProvider;
     private View rootview;
-    private ImageView mImageView;
+    private ImageView mImageView,currentColorView;
     private Paint mPaint = new Paint();
     private Bitmap bmp,basicbmp;
     private Canvas mCanvas;
@@ -71,6 +71,7 @@ public class MainActivityFragment extends Fragment {
     static final int TEXT=2;
     static final int PICK=3;
     static final int PANZOOM=4;
+
 
     String m_Text = null;
 
@@ -255,6 +256,10 @@ public class MainActivityFragment extends Fragment {
         mMatrix= new Matrix();
         mSaveMatrix = new Matrix();
 
+
+        currentColorView=(ImageView) rootview.findViewById(R.id.currentColorView);
+
+        currentColorView.setBackgroundColor(Color.RED);
 
         mPaint.setColor(Color.RED);
         mPaint.setAntiAlias(true);
@@ -729,7 +734,7 @@ public class MainActivityFragment extends Fragment {
         drawSpinner.setAdapter(drawAdapter);
         drawSpinner.setSelection(0);
         drawMode=CIRCLE;
-        drawSpinner.setBackgroundColor(Color.RED);
+//        drawSpinner.setBackgroundColor(Color.RED);
 
         drawSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -759,7 +764,9 @@ public class MainActivityFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 mPaint.setColor(colors[position]);
-                drawSpinner.setBackgroundColor(colors[position]);
+                currentColorView.setBackgroundColor(colors[position]);
+//                brushBar.setBackgroundColor(colors[position]);
+
             }
         });
 
