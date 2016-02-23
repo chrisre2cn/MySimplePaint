@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PointF;
+import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -48,7 +49,7 @@ public class MainActivityFragment extends Fragment {
     private Uri bmpUri;
     private ShareActionProvider mShareActionProvider;
     private View rootview;
-    private ImageView mImageView,currentColorView;
+    private ImageView mImageView;
     private Paint mPaint = new Paint();
     private Bitmap bmp,basicbmp;
     private Canvas mCanvas;
@@ -239,8 +240,6 @@ public class MainActivityFragment extends Fragment {
         }
 
 
-        brushBar=(SeekBar) rootview.findViewById(R.id.brushBar);
-        brushBar.setProgress(1);
         bmp = temp_bmp.copy(Bitmap.Config.ARGB_8888,true);
         temp_bmp.recycle();
         basicbmp=bmp.copy(Bitmap.Config.ARGB_8888,true);
@@ -256,10 +255,6 @@ public class MainActivityFragment extends Fragment {
         mMatrix= new Matrix();
         mSaveMatrix = new Matrix();
 
-
-        currentColorView=(ImageView) rootview.findViewById(R.id.currentColorView);
-
-        currentColorView.setBackgroundColor(Color.RED);
 
         mPaint.setColor(Color.RED);
         mPaint.setAntiAlias(true);
@@ -279,8 +274,8 @@ public class MainActivityFragment extends Fragment {
 
                 Sprite s = spriteStack.pop();
 
-                if (s.savedSprite!=null) // this is a moved object; undo is to make hidden previous sprite visible
-                    s.savedSprite.visible=true;
+                if (s.savedSprite != null) // this is a moved object; undo is to make hidden previous sprite visible
+                    s.savedSprite.visible = true;
 
                 drawSprites();
 
@@ -300,7 +295,7 @@ public class MainActivityFragment extends Fragment {
             public void onClick(View v) {
 
 
-                drawMode=PANZOOM;
+                drawMode = PANZOOM;
                 drawSpinner.setSelection(PANZOOM);
 
                 drawSprites();
@@ -369,12 +364,12 @@ public class MainActivityFragment extends Fragment {
                         case MotionEvent.ACTION_UP://first finger lifted
                             switch (drawMode) {
                                 case CIRCLE:
-                                    if (lastr>0)
+                                    if (lastr > 0)
                                         spriteStack.push(new Sprite(lastx, lasty, lastr, mPaint));
                                     break;
                                 case RECT:
-                                    if (startx!=coords[0] || starty!=coords[1])
-                                        spriteStack.push(new Sprite(Math.min(startx,coords[0]), Math.min(starty,coords[1]),
+                                    if (startx != coords[0] || starty != coords[1])
+                                        spriteStack.push(new Sprite(Math.min(startx, coords[0]), Math.min(starty, coords[1]),
                                                 Math.max(startx, coords[0]), Math.max(starty, coords[1]), mPaint));
                                     break;
                                 case TEXT:
@@ -602,7 +597,7 @@ public class MainActivityFragment extends Fragment {
                     // Perform the transformation
                     ((ImageView) view).setImageMatrix(mMatrix);
 
-                } else if (drawMode == PICK ) {
+                } else if (drawMode == PICK) {
 
                     final int index = e.getActionIndex();
                     final float[] coords = new float[]{e.getX(index), e.getY(index)};
@@ -619,14 +614,14 @@ public class MainActivityFragment extends Fragment {
                                 lastr = 0;
                                 dragging = true;
 
-                            for (Sprite c : spriteStack) {
-                                if (c.visible && Math.abs(c.x - startx) < 25 && Math.abs(c.y - starty) < 25) {
-                                    pickedSprite = c;
-                                    picked = true;
-                                    break;
+                                for (Sprite c : spriteStack) {
+                                    if (c.visible && Math.abs(c.x - startx) < 25 && Math.abs(c.y - starty) < 25) {
+                                        pickedSprite = c;
+                                        picked = true;
+                                        break;
+                                    }
                                 }
-                            }
-                                if ( picked ) {
+                                if (picked) {
                                     moveSprite = new Sprite(pickedSprite);
                                     pickedSprite.visible = false;
                                     moveSprite.p.setStrokeWidth(moveSprite.p.getStrokeWidth() + 10);
@@ -658,25 +653,25 @@ public class MainActivityFragment extends Fragment {
                                 picked = false;
                             }
                             dragging = false;
-                        break;
+                            break;
 
                         case MotionEvent.ACTION_MOVE:
 
                             if (picked && dragging) { //movement of first finger
                                 drawSprites();
-                                moveSprite.x+=(coords[0]-lastx);
-                                moveSprite.y+=(coords[1]-lasty);
-                                if ( moveSprite.type == RECT) {
-                                    moveSprite.bx+=(coords[0]-lastx);
-                                    moveSprite.by+=(coords[1]-lasty);
+                                moveSprite.x += (coords[0] - lastx);
+                                moveSprite.y += (coords[1] - lasty);
+                                if (moveSprite.type == RECT) {
+                                    moveSprite.bx += (coords[0] - lastx);
+                                    moveSprite.by += (coords[1] - lasty);
                                 }
 
                                 moveSprite.draw(mCanvas);
 
-                                lastx=coords[0];
-                                lasty=coords[1];
+                                lastx = coords[0];
+                                lasty = coords[1];
 
-                            mImageView.invalidate();
+                                mImageView.invalidate();
 
                             }
 
@@ -689,20 +684,22 @@ public class MainActivityFragment extends Fragment {
                 }
 
 
-
-
-
-
-
                 return true;
             }
         });
 
+
+
+        brushBar=(SeekBar) rootview.findViewById(R.id.brushBar);
+//        brushBar.setProgress(1);
+//brushBar.getProgressDrawable().setColorFilter(Color.RED, PorterDuff.Mode.SRC);
+
+        brushBar.getThumb().setColorFilter(Color.RED, PorterDuff.Mode.SRC);
         brushBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 //                        mPaint.setStrokeWidth(progress+5);
-                mPaint.setStrokeWidth( progress+1);
+                mPaint.setStrokeWidth(progress + 1);
 
 //                if ( progress >0) {
 //                    mPaint.setStrokeWidth( progress+1);
@@ -724,8 +721,6 @@ public class MainActivityFragment extends Fragment {
 
             }
         });
-
-
   // prepare draw_spinner
 
         drawSpinner  = (Spinner) rootview.findViewById(R.id.draw_spinner);
@@ -764,8 +759,9 @@ public class MainActivityFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 mPaint.setColor(colors[position]);
-                currentColorView.setBackgroundColor(colors[position]);
-//                brushBar.setBackgroundColor(colors[position]);
+//               brushBar.setBackgroundColor(colors[position]);
+                    brushBar.getThumb().setColorFilter(colors[position], PorterDuff.Mode.SRC);
+
 
             }
         });
