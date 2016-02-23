@@ -5,5 +5,7 @@
         <item>Circle</item>
         <item>Rectangle</item>
         <item>Text</item>
+        <item>"Pick &amp; move"</item>
+        <item>"Zoom/Pan"</item>
     </string-array>
 </resources>

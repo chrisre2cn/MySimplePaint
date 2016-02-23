@@ -34,7 +34,6 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -61,8 +60,8 @@ public class MainActivityFragment extends Fragment {
     private SeekBar brushBar;
     private static float scaleFactor;
     private  Matrix mMatrix, mSaveMatrix;
-    private boolean isDrawing=false, zoomed=false, firstTouch=true;
-    private TextView brushText;
+    private boolean firstTouch=true, picked=false;
+//    private TextView brushText;
     private float[] iValues = new float[9];
     private Spinner drawSpinner;
     private ArrayAdapter<CharSequence> drawAdapter;
@@ -70,11 +69,16 @@ public class MainActivityFragment extends Fragment {
     static final int CIRCLE=0;
     static final int RECT=1;
     static final int TEXT=2;
+    static final int PICK=3;
+    static final int PANZOOM=4;
+
     String m_Text = null;
+
+    private Sprite pickedSprite, moveSprite;
 
     // colors
 
-    static final Integer colors [] = new Integer[] {Color.BLACK,Color.BLUE,Color.CYAN,Color.DKGRAY,Color.GRAY,
+    static final Integer colors [] = new Integer[] {Color.BLUE,Color.CYAN,Color.DKGRAY,Color.GRAY,
             Color.GREEN	,Color.LTGRAY,Color.MAGENTA,Color.RED,Color.WHITE,Color.YELLOW};
 
 
@@ -100,6 +104,19 @@ public class MainActivityFragment extends Fragment {
         public Paint p;
         public String t;
         public float bx,by;
+        public boolean visible=true;
+        public Sprite savedSprite;
+
+        public Sprite(Sprite s) {
+            this.type = s.type;
+            this.x = s.x;
+            this.y = s.y;
+            this.r = s.r;
+            this.p = new Paint(s.p);
+            if (s.t!=null)  this.t = s.t.toString();
+            this.bx = s.bx;
+            this.by = s.by;
+        }
 
         public Sprite(float x, float y, float r, Paint p) {
             this.type = CIRCLE;
@@ -131,25 +148,48 @@ public class MainActivityFragment extends Fragment {
         }
 
         public void draw( Canvas c) {
-            switch (this.type) {
-                case CIRCLE:
-                    c.drawCircle(x,y,r,p);
-                    break;
-                case RECT:
-                    c.drawRect(x,y,bx,by,p);
-                    break;
-                case TEXT:
-                    c.drawText(t,x,y,p);
-                    break;
+
+            if (visible) {
+
+                switch (this.type) {
+                    case CIRCLE:
+                        c.drawCircle(x, y, r, p);
+                        break;
+                    case RECT:
+                        c.drawRect(x, y, bx, by, p);
+                        break;
+                    case TEXT:
+                        c.drawText(t, x, y, p);
+                        break;
+                }
+
             }
-          }
+        }
+
+        public void drawBalloon( Canvas c) {
+
+            if (visible) {
+
+                Paint ballonP = new Paint(p);
+                ballonP.setAlpha(100);
+                ballonP.setStyle(Paint.Style.FILL);
+                c.drawCircle(x, y, 25, ballonP);
+
+
+            }
+        }
+
     }
 
     private void drawSprites() {
 
         mCanvas.drawBitmap(basicbmp, 0, 0, null);
 
-        for (Sprite c : spriteStack) c.draw(mCanvas);
+        for (Sprite c : spriteStack) {
+            c.draw(mCanvas);
+            if (drawMode==PICK)
+                c.drawBalloon(mCanvas);
+        }
     }
 
     public MainActivityFragment() {
@@ -168,7 +208,7 @@ public class MainActivityFragment extends Fragment {
                              Bundle savedInstanceState) {
         rootview = inflater.inflate(R.layout.fragment_main, container, false);
         spriteStack  = new Stack();
-        brushText = (TextView) rootview.findViewById(R.id.textView1);
+//        brushText = (TextView) rootview.findViewById(R.id.textView1);
         mImageView = (ImageView) rootview.findViewById(R.id.imageView);
         Bitmap temp_bmp=null;
         final Uri imageUri = ((MainActivity) getActivity()).bmpUri;
@@ -197,17 +237,14 @@ public class MainActivityFragment extends Fragment {
 
         }
 
-        isDrawing = false;
 
         brushBar=(SeekBar) rootview.findViewById(R.id.brushBar);
-        brushBar.setProgress(0);
+        brushBar.setProgress(1);
         bmp = temp_bmp.copy(Bitmap.Config.ARGB_8888,true);
         temp_bmp.recycle();
         basicbmp=bmp.copy(Bitmap.Config.ARGB_8888,true);
         mCanvas = new Canvas(bmp);
         dragging=false;
-
-
 
 
         mImageView.setImageBitmap(bmp);
@@ -225,6 +262,7 @@ public class MainActivityFragment extends Fragment {
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setStrokeJoin(Paint.Join.ROUND);
         mPaint.setStrokeCap(Paint.Cap.ROUND);
+        mPaint.setStrokeWidth(2);
         mPaint.setTextSize(48f);
 
 
@@ -234,7 +272,10 @@ public class MainActivityFragment extends Fragment {
             @Override
             public void onClick(View v) {
 
-                spriteStack.pop();
+                Sprite s = spriteStack.pop();
+
+                if (s.savedSprite!=null) // this is a moved object; undo is to make hidden previous sprite visible
+                    s.savedSprite.visible=true;
 
                 drawSprites();
 
@@ -252,6 +293,13 @@ public class MainActivityFragment extends Fragment {
         mDone.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+
+                drawMode=PANZOOM;
+                drawSpinner.setSelection(PANZOOM);
+
+                drawSprites();
+
                 Intent shareIntent = new Intent();
                 shareIntent.setAction(Intent.ACTION_SEND);
                 try {
@@ -293,7 +341,7 @@ public class MainActivityFragment extends Fragment {
                     firstTouch = false;
                 }
 
-                if (isDrawing) {
+                if (drawMode >= 0 && drawMode < 3) {  // drawing something
 
                     final int index = e.getActionIndex();
                     final float[] coords = new float[]{e.getX(index), e.getY(index)};
@@ -316,10 +364,13 @@ public class MainActivityFragment extends Fragment {
                         case MotionEvent.ACTION_UP://first finger lifted
                             switch (drawMode) {
                                 case CIRCLE:
-                                    spriteStack.push(new Sprite(lastx, lasty, lastr, mPaint));
+                                    if (lastr>0)
+                                        spriteStack.push(new Sprite(lastx, lasty, lastr, mPaint));
                                     break;
                                 case RECT:
-                                    spriteStack.push(new Sprite(startx, starty, coords[0], coords[1], mPaint));
+                                    if (startx!=coords[0] || starty!=coords[1])
+                                        spriteStack.push(new Sprite(Math.min(startx,coords[0]), Math.min(starty,coords[1]),
+                                                Math.max(startx, coords[0]), Math.max(starty, coords[1]), mPaint));
                                     break;
                                 case TEXT:
                                     AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
@@ -397,7 +448,7 @@ public class MainActivityFragment extends Fragment {
                             break;
                     }
 
-                } else // dragging or zooming
+                } else if (drawMode == PANZOOM)// dragging or zooming
                 {
                     // make the image scalable as a matrix
                     float scale;
@@ -546,7 +597,96 @@ public class MainActivityFragment extends Fragment {
                     // Perform the transformation
                     ((ImageView) view).setImageMatrix(mMatrix);
 
+                } else if (drawMode == PICK ) {
+
+                    final int index = e.getActionIndex();
+                    final float[] coords = new float[]{e.getX(index), e.getY(index)};
+                    Matrix matrix = new Matrix();
+                    ((ImageView) view).getImageMatrix().invert(matrix);
+                    matrix.mapPoints(coords);
+
+                    switch (MotionEventCompat.getActionMasked(e)) {
+
+                        case MotionEvent.ACTION_DOWN: //first finger down only
+                            if (!dragging) {
+                                lastx = startx = coords[0];
+                                lasty = starty = coords[1];
+                                lastr = 0;
+                                dragging = true;
+
+                            for (Sprite c : spriteStack) {
+                                if (c.visible && Math.abs(c.x - startx) < 25 && Math.abs(c.y - starty) < 25) {
+                                    pickedSprite = c;
+                                    picked = true;
+                                    break;
+                                }
+                            }
+                                if ( picked ) {
+                                    moveSprite = new Sprite(pickedSprite);
+                                    pickedSprite.visible = false;
+                                    moveSprite.p.setStrokeWidth(moveSprite.p.getStrokeWidth() + 10);
+                                    drawSprites();
+                                    moveSprite.draw(mCanvas);
+                                    mImageView.invalidate();
+                                }
+
+                            }
+
+                            break;
+
+                        case MotionEvent.ACTION_UP://first finger lifted
+
+                            if (picked) {
+
+                                if (startx != coords[0] && starty != coords[1]) {
+                                    moveSprite.p.setStrokeWidth(moveSprite.p.getStrokeWidth() - 10);
+                                    moveSprite.savedSprite = pickedSprite;
+                                    spriteStack.push(moveSprite);
+                                } else
+                                    pickedSprite.visible = true;
+
+                                drawSprites();
+//                        for (Sprite c : spriteStack)
+//                            c.drawBalloon(mCanvas);
+                                dragging = false;
+                                mImageView.invalidate();
+                                picked = false;
+                            }
+                            dragging = false;
+                        break;
+
+                        case MotionEvent.ACTION_MOVE:
+
+                            if (picked && dragging) { //movement of first finger
+                                drawSprites();
+                                moveSprite.x+=(coords[0]-lastx);
+                                moveSprite.y+=(coords[1]-lasty);
+                                if ( moveSprite.type == RECT) {
+                                    moveSprite.bx+=(coords[0]-lastx);
+                                    moveSprite.by+=(coords[1]-lasty);
+                                }
+
+                                moveSprite.draw(mCanvas);
+
+                                lastx=coords[0];
+                                lasty=coords[1];
+
+                            mImageView.invalidate();
+
+                            }
+
+
+//                            mImageView.invalidate();
+                            break;
+                    }
+
+
                 }
+
+
+
+
+
 
 
                 return true;
@@ -557,14 +697,16 @@ public class MainActivityFragment extends Fragment {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 //                        mPaint.setStrokeWidth(progress+5);
-                if ( progress >0) {
-                    mPaint.setStrokeWidth( progress);
-                    isDrawing=true;
-                    brushText.setText("Brush size "+progress);
-                } else{
-                    isDrawing=false;
-                    brushText.setText("Drag/Zoom mode");
-                }
+                mPaint.setStrokeWidth( progress+1);
+
+//                if ( progress >0) {
+//                    mPaint.setStrokeWidth( progress+1);
+//                    isDrawing=true;
+//                    brushText.setText("Brush size "+progress);
+//                } else{
+//                    isDrawing=false;
+//                    brushText.setText("Drag/Zoom mode");
+//                }
             }
 
             @Override
@@ -586,13 +728,17 @@ public class MainActivityFragment extends Fragment {
         drawAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         drawSpinner.setAdapter(drawAdapter);
         drawSpinner.setSelection(0);
+        drawMode=CIRCLE;
         drawSpinner.setBackgroundColor(Color.RED);
 
         drawSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 drawMode = position;
-                Log.v(TAG, "drawing " + drawMode);
+
+                    drawSprites();
+
+                Log.v(TAG, "drawMode " + drawMode);
 
             }
 
@@ -648,9 +794,9 @@ public class MainActivityFragment extends Fragment {
 
 
     private float spacing(MotionEvent event) {
-   float x = event.getX(0) - event.getX(1);
-   float y = event.getY(0) - event.getY(1);
-   return (float) Math.sqrt(x * x + y * y);
+        float x = event.getX(0) - event.getX(1);
+        float y = event.getY(0) - event.getY(1);
+        return (float) Math.sqrt(x * x + y * y);
 }
 
 private void midPoint(PointF point, MotionEvent event) {
