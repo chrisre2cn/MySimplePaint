@@ -80,7 +80,8 @@ public class MainActivityFragment extends Fragment {
 
     String m_Text = null;
 
-    private Sprite pickedSprite, moveSprite;
+    private Sprite  moveSprite;
+    private int pickedSprite;
 
     // colors
 
@@ -175,8 +176,9 @@ public class MainActivityFragment extends Fragment {
 
         }
         else {
-            temp_bmp =Bitmap.createBitmap(getResources().getConfiguration().screenWidthDp,
-                    getResources().getConfiguration().screenHeightDp,Bitmap.Config.ARGB_8888);
+            temp_bmp =Bitmap.createBitmap(Math.max(getResources().getConfiguration().screenWidthDp,
+                    getResources().getConfiguration().screenHeightDp),Math.max(getResources().getConfiguration().screenWidthDp,
+                    getResources().getConfiguration().screenHeightDp),Bitmap.Config.ARGB_8888);
             temp_bmp.eraseColor(Color.WHITE);
              basename="untitled";
 
@@ -210,15 +212,21 @@ public class MainActivityFragment extends Fragment {
 
 
         mUndo = (Button) rootview.findViewById(R.id.undo_button);
-        mUndo.setEnabled(false);
+
+        if (spriteStack.size() > 0)
+            mUndo.setEnabled(true);
+        else
+            mUndo.setEnabled(false);
+
         mUndo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
                 Sprite s = spriteStack.pop();
 
-                if (s.savedSprite != null) // this is a moved object; undo is to make hidden previous sprite visible
-                    s.savedSprite.visible = true;
+                if (s.savedSprite != 0)                    // this is a moved object; undo is to make hidden previous sprite visible
+//                    s.savedSprite.visible = true;
+                    spriteStack.elementAt(s.savedSprite).visible=true;
 
                 drawSprites();
 
@@ -557,16 +565,18 @@ public class MainActivityFragment extends Fragment {
                                 lastr = 0;
                                 dragging = true;
 
-                                for (Sprite c : spriteStack) {
+                                for (int i=0;i< spriteStack.size();i++) {
+                                    Sprite c = spriteStack.get(i);
                                     if (c.visible && Math.abs(c.x - startx) < 25 && Math.abs(c.y - starty) < 25) {
-                                        pickedSprite = c;
+                                        pickedSprite = i;
                                         picked = true;
                                         break;
                                     }
                                 }
                                 if (picked) {
-                                    moveSprite = new Sprite(pickedSprite);
-                                    pickedSprite.visible = false;
+                                    Sprite s = spriteStack.get(pickedSprite);
+                                    moveSprite = new Sprite(s);
+                                    s.visible = false;
                                     moveSprite.p_width+=10;
                                     drawSprites();
                                     moveSprite.draw(mCanvas,mPaint);
@@ -586,7 +596,7 @@ public class MainActivityFragment extends Fragment {
                                     moveSprite.savedSprite = pickedSprite;
                                     spriteStack.push(moveSprite);
                                 } else
-                                    pickedSprite.visible = true;
+                                   spriteStack.get(pickedSprite).visible = true;
 
                                 drawSprites();
 //                        for (Sprite c : spriteStack)
