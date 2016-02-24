@@ -37,7 +37,11 @@ import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Stack;
 
 /**
@@ -97,100 +101,16 @@ public class MainActivityFragment extends Fragment {
 
     private Stack<Sprite> spriteStack;
 
-    private class Sprite {
 
-        public int type;
-        public float x;
-        public float y;
-        public float r;
-        public Paint p;
-        public String t;
-        public float bx,by;
-        public boolean visible=true;
-        public Sprite savedSprite;
-
-        public Sprite(Sprite s) {
-            this.type = s.type;
-            this.x = s.x;
-            this.y = s.y;
-            this.r = s.r;
-            this.p = new Paint(s.p);
-            if (s.t!=null)  this.t = s.t.toString();
-            this.bx = s.bx;
-            this.by = s.by;
-        }
-
-        public Sprite(float x, float y, float r, Paint p) {
-            this.type = CIRCLE;
-            this.x = x;
-            this.y = y;
-            this.r = r;
-            this.p = new Paint(p);
-        }
-
-        public Sprite(float x, float y,  float bx, float by, Paint p) {
-            this.type = RECT;
-            this.x = x;
-            this.y = y;
-            this.p =  new Paint(p);
-            this.bx = bx;
-            this.by = by;
-        }
-
-        public Sprite(float x, float y, String t, Paint p) {
-            this.type=TEXT;
-            this.x = x;
-            this.y = y;
-            this.t = t.toString();
-            this.p =  new Paint(p);
-            float w=p.getStrokeWidth();
-            if (w>5)
-                this.p.setStrokeWidth(5);
-            this.p.setTextSize(48+w*4);
-        }
-
-        public void draw( Canvas c) {
-
-            if (visible) {
-
-                switch (this.type) {
-                    case CIRCLE:
-                        c.drawCircle(x, y, r, p);
-                        break;
-                    case RECT:
-                        c.drawRect(x, y, bx, by, p);
-                        break;
-                    case TEXT:
-                        c.drawText(t, x, y, p);
-                        break;
-                }
-
-            }
-        }
-
-        public void drawBalloon( Canvas c) {
-
-            if (visible) {
-
-                Paint ballonP = new Paint(p);
-                ballonP.setAlpha(100);
-                ballonP.setStyle(Paint.Style.FILL);
-                c.drawCircle(x, y, 25, ballonP);
-
-
-            }
-        }
-
-    }
 
     private void drawSprites() {
 
         mCanvas.drawBitmap(basicbmp, 0, 0, null);
 
         for (Sprite c : spriteStack) {
-            c.draw(mCanvas);
+            c.draw(mCanvas,mPaint);
             if (drawMode==PICK)
-                c.drawBalloon(mCanvas);
+                c.drawBalloon(mCanvas,mPaint);
         }
     }
 
@@ -209,7 +129,30 @@ public class MainActivityFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         rootview = inflater.inflate(R.layout.fragment_main, container, false);
+
+ // see if we have saved data here
+
         spriteStack  = new Stack();
+
+        if ( savedInstanceState!=null && savedInstanceState.getString("TEMPFILE").equalsIgnoreCase("sprites"))
+        {
+       String filename = "sprites";
+        FileInputStream inputStream;
+            Sprite c;
+
+        try {
+            inputStream = getContext().openFileInput(filename);
+            ObjectInputStream istream = new ObjectInputStream(inputStream);
+          for (  c = (Sprite ) (istream.readObject() ); c!=null;c = (Sprite ) (istream.readObject() ))
+                spriteStack.push(c);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                }
+        }
+
+
+
 //        brushText = (TextView) rootview.findViewById(R.id.textView1);
         mImageView = (ImageView) rootview.findViewById(R.id.imageView);
         Bitmap temp_bmp=null;
@@ -365,12 +308,12 @@ public class MainActivityFragment extends Fragment {
                             switch (drawMode) {
                                 case CIRCLE:
                                     if (lastr > 0)
-                                        spriteStack.push(new Sprite(lastx, lasty, lastr, mPaint));
+                                        spriteStack.push(new Sprite(lastx, lasty, lastr, mPaint.getStrokeWidth(),mPaint.getColor()));
                                     break;
                                 case RECT:
                                     if (startx != coords[0] || starty != coords[1])
                                         spriteStack.push(new Sprite(Math.min(startx, coords[0]), Math.min(starty, coords[1]),
-                                                Math.max(startx, coords[0]), Math.max(starty, coords[1]), mPaint));
+                                                Math.max(startx, coords[0]), Math.max(starty, coords[1]), mPaint.getStrokeWidth(),mPaint.getColor()));
                                     break;
                                 case TEXT:
                                     AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
@@ -390,7 +333,7 @@ public class MainActivityFragment extends Fragment {
                                             dialog.dismiss();
                                             m_Text = input.getText().toString();
                                             if (m_Text != null) {
-                                                spriteStack.push(new Sprite(coords[0], coords[1], m_Text, mPaint));
+                                                spriteStack.push(new Sprite(coords[0], coords[1], m_Text, mPaint.getStrokeWidth(),mPaint.getColor()));
                                                 m_Text = null;
                                                 if (!spriteStack.empty())
                                                     mUndo.setEnabled(true);
@@ -624,9 +567,9 @@ public class MainActivityFragment extends Fragment {
                                 if (picked) {
                                     moveSprite = new Sprite(pickedSprite);
                                     pickedSprite.visible = false;
-                                    moveSprite.p.setStrokeWidth(moveSprite.p.getStrokeWidth() + 10);
+                                    moveSprite.p_width+=10;
                                     drawSprites();
-                                    moveSprite.draw(mCanvas);
+                                    moveSprite.draw(mCanvas,mPaint);
                                     mImageView.invalidate();
                                 }
 
@@ -639,7 +582,7 @@ public class MainActivityFragment extends Fragment {
                             if (picked) {
 
                                 if (startx != coords[0] && starty != coords[1]) {
-                                    moveSprite.p.setStrokeWidth(moveSprite.p.getStrokeWidth() - 10);
+                                    moveSprite.p_width-=10;
                                     moveSprite.savedSprite = pickedSprite;
                                     spriteStack.push(moveSprite);
                                 } else
@@ -666,7 +609,7 @@ public class MainActivityFragment extends Fragment {
                                     moveSprite.by += (coords[1] - lasty);
                                 }
 
-                                moveSprite.draw(mCanvas);
+                                moveSprite.draw(mCanvas,mPaint);
 
                                 lastx = coords[0];
                                 lasty = coords[1];
@@ -836,4 +779,34 @@ private void midPoint(PointF point, MotionEvent event) {
     }
 
 
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        String filename = "sprites";
+        FileOutputStream outputStream;
+
+        outState.putString("TEMPFILE",filename);
+
+        try {
+            outputStream = getContext().openFileOutput(filename, Context.MODE_PRIVATE);
+            ObjectOutputStream ostream = new ObjectOutputStream(outputStream);
+            for ( Sprite c:spriteStack)
+                    ostream.writeObject(c);
+            ostream.close();
+            outputStream.close();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                }
+
+
+    }
+
+
+
+
+
 }
+
+
+
