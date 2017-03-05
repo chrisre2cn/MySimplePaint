@@ -39,35 +39,15 @@
         android:layout_weight="1"
         android:minHeight="48dp">
 
-        <LinearLayout
-            android:orientation="vertical"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="4"
-            android:layout_gravity="left"
-            android:minWidth="64dp">
-
-
-
-    <SeekBar
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/brushBar"
-        android:max="20"
-        android:contentDescription="Brush size"
-        android:minWidth="120dp"
-        android:nestedScrollingEnabled="true" />
-        <TextView
-            android:id="@+id/textView1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Drag/Zoom mode"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:textSize="12dp"
-            android:minWidth="120dp"
-            android:singleLine="false"
-            android:padding="10px" />
-    </LinearLayout>
+        <SeekBar
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/brushBar"
+            android:max="20"
+            android:contentDescription="Stroke width"
+            android:minWidth="48dp"
+            android:nestedScrollingEnabled="true"
+            android:contextClickable="false" />
 
         <Spinner
             android:layout_width="wrap_content"
